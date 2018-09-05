@@ -1,0 +1,24 @@
+{{ define "login" }}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MESA Login</title>
+	<link rel="stylesheet" type="text/css" href="index.css">
+	<favicon src="https://cwp.io/meteor-logo.png">
+</head>
+<body>
+	<form action="/login">
+		<span>Email</span><input type="text" name="e" placeholder="Email Address" text="{{ .Email }}" />
+		<span>Password</span><input type="Password" name="p" />
+		<input type="submit" text="Login" />
+		{{ range .Alerts }}
+			<div class="alert {{ .Level }}">
+				<span class="alertmsg">{{ .Msg }}</span>
+			</div>
+		{{ end }}
+	</form>
+</body>
+</html>
+
+{{ end }}
