@@ -114,7 +114,6 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 				cookie := &http.Cookie{
 					Name:    "account",
 					Value:   encoded,
-					Path:    "/",
 					Expires: time.Now().Add(time.Minute * 60),
 					MaxAge:  60 * 60,
 				}
@@ -222,7 +221,6 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 			cookie := &http.Cookie{
 				Name:    "account",
 				Value:   encoded,
-				Path:    "/",
 				Expires: time.Now().Add(time.Minute * 60),
 				MaxAge:  60 * 60,
 			}
