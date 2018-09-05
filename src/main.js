@@ -3,15 +3,28 @@ let container = undefined;
 let image = undefined;
 
 // Default image size
-let width = 1163;
+let width = 1177;
 let height = 942;
 let ratio = 1;
 
-let zoom = 4;
+let zoom = 1;
 
 let red = undefined;
 let green = undefined;
 let cross = undefined;
+
+document.addEventListener("wheel", onZoom, false);
+
+function onZoom(event) {
+	console.log(event)
+	zoom *= Math.pow(2, -event.deltaY / 10)
+	if (zoom < 1) zoom = 1;
+
+	let mouse = app.renderer.plugins.interaction.mouse.global;
+	container.scale.set(zoom);
+	container.x = - (zoom-1) * mouse.x;
+	container.y = - (zoom-1) * mouse.y;
+}
 
 window.onload = function() {
 	// Texture for a red circle
@@ -57,8 +70,11 @@ window.onload = function() {
 		height = maxheight;
 	}
 
+	// width = Math.ceil(width);
+	// height = Math.ceil(height);
+
 	// Create app
-	app = new PIXI.Application(width, height);
+	app = new PIXI.Application(width, height, {backgroundColor : 0xfff});
 
 	//Add the canvas that Pixi automatically created for you to the HTML document
 	document.getElementById("img").appendChild(app.view);

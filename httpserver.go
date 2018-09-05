@@ -40,7 +40,10 @@ func main() {
 	http.HandleFunc("/login/", LoginHandle)
 
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	log.Println("Server has loaded successfully")
+
+	log.Fatal(http.ListenAndServe(":6374", nil))
 }
 
 func HTMLHandle(w http.ResponseWriter, r *http.Request) {
@@ -76,11 +79,12 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	login := r.FormValue("login")
 	create := r.FormValue("create")
 	e := r.FormValue("e") // email - no username
 	p := r.FormValue("p") // password
 
-	if create == "" {
+	if login == "login" {
 		// get hash from database
 		// SELECT hash FROM accounts WHERE email=?
 
@@ -98,12 +102,14 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 		}
 		return
+	} else if create == "create" {
+
+		q := r.FormValue("q") // password confirm
+
+		if e == "" || q != p {
+			return
+		}
 	}
 
-	q := r.FormValue("q") // password confirm
-
-	if e == "" || q != p {
-		return
-	}
-
+	tmpls.ExecuteTemplate(w, "login", []alert{})
 }
