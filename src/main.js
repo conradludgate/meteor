@@ -54,6 +54,9 @@ function onZoom(event) {
 }
 
 window.onload = function() {
+	// 15 FPS. It's not a game, just an image viewer
+	PIXI.settings.TARGET_FPMS = 15 / 1000;
+
 	// Texture for a red circle
 	red = (new PIXI.Graphics())
 		.lineStyle(2, 0xff0000)
