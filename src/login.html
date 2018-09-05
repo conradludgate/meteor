@@ -6,44 +6,48 @@
 	<title>MESA Login</title>
 	<link rel="stylesheet" type="text/css" href="index.css">
 	<link rel="stylesheet" type="text/css" href="login.css">
-	<favicon src="https://cwp.io/meteor-logo.png">
+	<link rel="icon" href="https://cwp.io/meteor-icon.png">
 </head>
 <body>
+	<script src="/login.js"></script>
+
 	<div class="tab">
-		<button class="tablinks" onclick="changeTab(event, 'login')">Login</button>
-		<button class="tablinks" onclick="changeTab(event, 'create')">Create</button>
+		<button class="tablinks" onclick="changeTab(0)">Login</button>
+		<button class="tablinks" onclick="changeTab(1)">Create</button>
 	</div>
 
-	<form id="login" class="tabcontent" action="/login">
-		<input type="hidden" name="login" value="login">
-		<span>Email</span>
-		<input type="text" name="e" placeholder="Email Address" text="{{ .Email }}" />
-		<span>Password</span>
-		<input type="Password" name="p" />
-		<input type="submit" text="Login" />
-		{{ range .Alerts }}
-			<div class="alert {{ .Level }}">
-				<span class="alertmsg">{{ .Msg }}</span>
-			</div>
-		{{ end }}
-	</form>
-	<form id="create" class="tabcontent" action="/login">
-		<input type="hidden" name="create" value="create">
-		<span>Email</span>
-		<input type="text" name="e" placeholder="Email Address" text="{{ .Email }}" />
-		<span>Password</span>
-		<input type="password" name="p" />
-		<span>Confirm Password</span>
-		<input type="password" name="q" />
-		<input type="submit" text="Login" />
-		{{ range .Alerts }}
-			<div class="alert {{ .Level }}">
-				<span class="alertmsg">{{ .Msg }}</span>
-			</div>
-		{{ end }}
+	<form class="tabcontent" action="/login/" method="POST">
+		<input id="type" type="hidden" name="type" value="login">
+		
+		<div id="email">
+			<span>Email</span>
+			<input type="text" name="e" placeholder="Email Address" value="{{ .Email }}">
+		</div>
+
+		<div id="password">
+			<span>Password</span>
+			<input type="password" name="p">
+		</div>
+
+		<div id="confirm" display="none">
+			<span>Confirm Password</span>
+			<input type="password" name="q">
+		</div>
+
+		<input id="submit" type="submit" text="Login">
 	</form>
 
-	<script src="/login.js"></script>
+	<div id="alerts">
+		{{ range .Alerts }}
+			<div class="alert {{ .Level }}">
+				<span class="alertmsg">{{ .Msg }}</span>
+			</div>
+		{{ end }}
+	</div>
+
+	<script>
+		changeTab({{ .Tab }});
+	</script>
 </body>
 </html>
 

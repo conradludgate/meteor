@@ -7,13 +7,14 @@ import (
 )
 
 type alert struct {
-	Level string
 	Msg   string
+	Level string
 }
 
 type loginData struct {
 	Email  string
 	Alerts []alert
+	Tab    int
 }
 
 var tmpls *template.Template

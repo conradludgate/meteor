@@ -1,20 +1,15 @@
-function changeTab(event, tab) {
-    // Declare all variables
-    var i, tabcontent, tablinks;
+function changeTab(tab) {
+	if (tab === 0) {
+		document.getElementById("confirm").style.display = "none";
+		document.getElementById("type").value="login";
+	} else {
+		document.getElementById("confirm").style.display = "block";
+		document.getElementById("type").value="create";
+	}
 
-    // Get all elements with class="tabcontent" and hide them
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
+	// Get all elements with class="tablinks" and remove the class "active"
+	let tablinks = document.getElementsByClassName("tablinks");
+	tablinks[1-tab].className = tablinks[1-tab].className.replace(" active", "");
 
-    // Get all elements with class="tablinks" and remove the class "active"
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-
-    // Show the current tab, and add an "active" class to the button that opened the tab
-    document.getElementById(tab).style.display = "block";
-    event.currentTarget.className += " active";
+	tablinks[tab].className += " active";
 }

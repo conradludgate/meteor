@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/badoux/checkmail"
 	"github.com/gorilla/securecookie"
 )
 
@@ -48,18 +50,21 @@ func main() {
 
 func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
+		if cookie, err := r.Cookie("account"); err == nil {
+			acc := Account{}
+			err = s.Decode("account", cookie.Value, &acc)
+			if err != nil || acc.RemoteAddr != r.RemoteAddr {
+				http.Redirect(w, r, "/login/", http.StatusSeeOther)
+				return
+			}
+		} else {
+			http.Redirect(w, r, "/login/", http.StatusSeeOther)
+			return
+		}
+
 		tmpls.ExecuteTemplate(w, "index", nil)
 		return
 	}
-	// else {
-	// 	b, ok := files[r.URL.Path[1:]]
-	// 	if !ok {
-	// 		w.WriteHeader(http.StatusNotFound)
-	// 		return
-	// 	}
-
-	// 	w.Write(b)
-	// }
 
 	http.ServeFile(w, r, filepath.Join("src", r.URL.Path))
 }
@@ -79,37 +84,153 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	login := r.FormValue("login")
-	create := r.FormValue("create")
-	e := r.FormValue("e") // email - no username
+	t := r.FormValue("type")
+	e := r.FormValue("e") // email
 	p := r.FormValue("p") // password
+	q := r.FormValue("q") // password confirm
 
-	if login == "login" {
+	if t == "login" {
 		// get hash from database
 		// SELECT hash FROM accounts WHERE email=?
 
 		var hash []byte
 		if err := select_hash.QueryRow(e).Scan(&hash); err != nil {
-			// user is not in DB
-			// return login page with email already filled in
-			// with hint to create account
-
-			return
+			if e == "" {
+				tmpls.ExecuteTemplate(w, "login", loginData{
+					e,
+					[]alert{
+						alert{"Email or password is incorrect", "amber"},
+					},
+					0,
+				})
+				return
+			}
 		}
 
 		if err := bcrypt.CompareHashAndPassword(hash, []byte(p)); err == nil {
 			// user logged in correctly
+			encoded, err := s.Encode("account", Account{e, r.RemoteAddr})
+			if err == nil {
+				cookie := &http.Cookie{
+					Name:    "account",
+					Value:   encoded,
+					Path:    "/",
+					Expires: time.Now().Add(time.Minute * 60),
+					MaxAge:  60 * 60,
+				}
+				http.SetCookie(w, cookie)
+			}
+
 			http.Redirect(w, r, "/", http.StatusSeeOther)
-		}
-		return
-	} else if create == "create" {
-
-		q := r.FormValue("q") // password confirm
-
-		if e == "" || q != p {
 			return
 		}
+
+		tmpls.ExecuteTemplate(w, "login", loginData{
+			e,
+			[]alert{
+				alert{"Email or password is incorrect", "amber"},
+			},
+			0,
+		})
+		return
+
+	} else if t == "create" {
+		if e == "" {
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Users must provide a valid email address", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		if p == "" {
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Users must provide a password", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		if err := checkmail.ValidateFormat(e); err != nil {
+			log.Println("Format error:", err.Error())
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Users must provide a valid email address", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		err := checkmail.ValidateHost(e)
+		if err != nil {
+			log.Println("Host error:", err.Error())
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Users must provide a valid email address", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		if q != p {
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Passwords did not match", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(p), 13)
+		if err != nil {
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Please enter a different password", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		_, err = insert_acc.Exec(e, hash)
+		if err != nil {
+			tmpls.ExecuteTemplate(w, "login", loginData{
+				e,
+				[]alert{
+					alert{"Account already exists", "amber"},
+				},
+				1,
+			})
+			return
+		}
+
+		encoded, err := s.Encode("account", Account{e, r.RemoteAddr})
+		if err == nil {
+			cookie := &http.Cookie{
+				Name:    "account",
+				Value:   encoded,
+				Path:    "/",
+				Expires: time.Now().Add(time.Minute * 60),
+				MaxAge:  60 * 60,
+			}
+			http.SetCookie(w, cookie)
+		}
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 
-	tmpls.ExecuteTemplate(w, "login", []alert{})
+	tmpls.ExecuteTemplate(w, "login", loginData{})
 }
