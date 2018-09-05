@@ -53,74 +53,70 @@ function onZoom(event) {
 	});
 }
 
-window.onload = function() {
-	// 15 FPS. It's not a game, just an image viewer
-	PIXI.settings.TARGET_FPMS = 15 / 1000;
+// 15 FPS. It's not a game, just an image viewer
+PIXI.settings.TARGET_FPMS = 15 / 1000;
 
-	// Texture for a red circle
-	red = (new PIXI.Graphics())
-		.lineStyle(2, 0xff0000)
-		.drawCircle(0, 0, 4)
-		.generateCanvasTexture(2, 4);
+// Texture for a red circle
+red = (new PIXI.Graphics())
+	.lineStyle(2, 0xff0000)
+	.drawCircle(0, 0, 4)
+	.generateCanvasTexture(2, 4);
 
-	// Texture for a green circle
-	green = (new PIXI.Graphics())
-		.lineStyle(2, 0x00ff00)
-		.drawCircle(0, 0, 4)
-		.generateCanvasTexture(2, 4);
+// Texture for a green circle
+green = (new PIXI.Graphics())
+	.lineStyle(2, 0x00ff00)
+	.drawCircle(0, 0, 4)
+	.generateCanvasTexture(2, 4);
 
-	// Texture for a red cross
-	// (Drawing a 4 pointed star with a small inner radius)
-	cross = (new PIXI.Graphics())
-		.lineStyle(2, 0xff0000)
-		.beginFill()
-		.drawStar(0, 0, 4, 6, 0.1, Math.PI/4)
-		.endFill()
-		.generateCanvasTexture(2, 4);
+// Texture for a red cross
+// (Drawing a 4 pointed star with a small inner radius)
+cross = (new PIXI.Graphics())
+	.lineStyle(2, 0xff0000)
+	.beginFill()
+	.drawStar(0, 0, 4, 6, 0.1, Math.PI/4)
+	.endFill()
+	.generateCanvasTexture(2, 4);
 
-	// Get window size
-	let e = window, a = 'inner';
-	if ( !( 'innerWidth' in window ) )
-	{
-	a = 'client';
-	e = document.documentElement || document.body;
-	}
-	let maxwidth = e[ a+'Width' ] - 100;
-	let maxheight = e[ a+'Height' ] - 100;
-
-	// Scale to the width
-	ratio  *= maxwidth / width;
-	height *= maxwidth / width;
-	width   = maxwidth;
-
-	// If the image size is too big, make the app window smaller
-	if (height > maxheight) {
-		ratio *= maxheight / height;
-		width *= maxheight / height;
-		height = maxheight;
-	}
-
-	width = Math.ceil(width);
-	height = Math.ceil(height);
-
-	// Create app
-	app = new PIXI.Application(width, height, {backgroundColor : 0xfff});
-
-	//Add the canvas that Pixi automatically created for you to the HTML document
-	document.getElementById("img").appendChild(app.view);
-
-	//Create the sprite
-	container = new PIXI.Container();
-	container.interactive = true;
-	container
-		.on('mousedown', onDown)
-		.on('mousemove', onMove);
-
-	//Add the image to the stage
-	app.stage.addChild(container);
-
-	loadImage("images/NLO_Main_2D_20160821-2355.jpg")
+// Get window size
+let e = window, a = 'inner';
+if ( !( 'innerWidth' in window ) )
+{
+a = 'client';
+e = document.documentElement || document.body;
 }
+let maxwidth = e[ a+'Width' ] - 100;
+let maxheight = e[ a+'Height' ] - 100;
+
+// Scale to the width
+ratio  *= maxwidth / width;
+height *= maxwidth / width;
+width   = maxwidth;
+
+// If the image size is too big, make the app window smaller
+if (height > maxheight) {
+	ratio *= maxheight / height;
+	width *= maxheight / height;
+	height = maxheight;
+}
+
+width = Math.ceil(width);
+height = Math.ceil(height);
+
+// Create app
+app = new PIXI.Application(width, height, {backgroundColor : 0xfff});
+
+//Add the canvas that Pixi automatically created for you to the HTML document
+document.getElementById("img").appendChild(app.view);
+
+//Create the sprite
+container = new PIXI.Container();
+container.interactive = true;
+container
+	.on('mousedown', onDown)
+	.on('mousemove', onMove);
+
+//Add the image to the stage
+app.stage.addChild(container);
 
 function loadImage(img) {
 	container.removeChildren();

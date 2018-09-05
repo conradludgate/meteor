@@ -1,15 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"path/filepath"
-	"time"
+	"strconv"
 
-	"golang.org/x/crypto/bcrypt"
-
-	"github.com/badoux/checkmail"
 	"github.com/gorilla/securecookie"
 )
 
@@ -38,8 +39,34 @@ func main() {
 		return
 	}
 
+	if err := openCSV("data.csv"); err != nil {
+		fmt.Println("Could not open CSV file.")
+		fmt.Println(err.Error())
+		return
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			// sig is a ^C, handle it
+			log.Println("Closing...")
+
+			csvw.Flush()
+			if err := csvw.Error(); err != nil {
+				log.Println("Error flushing CSV:", err.Error())
+			}
+			if err := file.Close(); err != nil {
+				log.Println("Error closing CSV:", err.Error())
+			}
+
+			os.Exit(0)
+		}
+	}()
+
 	http.HandleFunc("/", HTMLHandle)
 	http.HandleFunc("/login/", LoginHandle)
+	http.HandleFunc("/submit/", SubmitHandle)
 
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 
@@ -62,168 +89,98 @@ func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		tmpls.ExecuteTemplate(w, "index", nil)
+		tmpls.ExecuteTemplate(w, "index", getImage())
 		return
 	}
 
 	http.ServeFile(w, r, filepath.Join("src", r.URL.Path))
 }
 
-type Account struct {
-	Username   string
-	RemoteAddr string
-}
-
-func LoginHandle(w http.ResponseWriter, r *http.Request) {
+func SubmitHandle(w http.ResponseWriter, r *http.Request) {
+	acc := Account{}
 	if cookie, err := r.Cookie("account"); err == nil {
-		acc := Account{}
 		err = s.Decode("account", cookie.Value, &acc)
-		if err == nil && acc.RemoteAddr == r.Header.Get("X-Real-IP") {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+		if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{
+				"error": 1,
+				"msg": "Login required"
+			}`))
 			return
 		}
-	}
-
-	t := r.FormValue("type")
-	e := r.FormValue("e") // email
-	p := r.FormValue("p") // password
-	q := r.FormValue("q") // password confirm
-
-	if t == "login" {
-		// get hash from database
-		// SELECT hash FROM accounts WHERE email=?
-
-		var hash []byte
-		if err := select_hash.QueryRow(e).Scan(&hash); err != nil {
-			if e == "" {
-				tmpls.ExecuteTemplate(w, "login", loginData{
-					e,
-					[]alert{
-						alert{"Email or password is incorrect", "amber"},
-					},
-					0,
-				})
-				return
-			}
-		}
-
-		if err := bcrypt.CompareHashAndPassword(hash, []byte(p)); err == nil {
-			// user logged in correctly
-			encoded, err := s.Encode("account", Account{e, r.Header.Get("X-Real-IP")})
-			if err == nil {
-				cookie := &http.Cookie{
-					Name:  "account",
-					Value: encoded,
-
-					Expires: time.Now().Add(time.Minute * 60),
-					MaxAge:  60 * 60,
-
-					Domain: "mesa.cwp.io",
-					Path:   "/",
-				}
-				http.SetCookie(w, cookie)
-			}
-
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		tmpls.ExecuteTemplate(w, "login", loginData{
-			e,
-			[]alert{
-				alert{"Email or password is incorrect", "amber"},
-			},
-			0,
-		})
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{
+			"error": 1,
+			"msg": "Login required"
+		}`))
 		return
-
-	} else if t == "create" {
-		if e == "" {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Users must provide a valid email address", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
-		if p == "" {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Users must provide a password", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
-		if err := checkmail.ValidateFormat(e); err != nil {
-			log.Println("Format error:", err.Error())
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Users must provide a valid email address", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
-		if q != p {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Passwords did not match", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
-		hash, err := bcrypt.GenerateFromPassword([]byte(p), 13)
-		if err != nil {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Please enter a different password", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
-		_, err = insert_acc.Exec(e, hash)
-		if err != nil {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Account already exists", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
-		encoded, err := s.Encode("account", Account{e, r.Header.Get("X-Real-IP")})
-		if err == nil {
-			cookie := &http.Cookie{
-				Name:  "account",
-				Value: encoded,
-
-				Expires: time.Now().Add(time.Minute * 60),
-				MaxAge:  60 * 60,
-
-				Domain: "mesa.cwp.io",
-				Path:   "/",
-			}
-			http.SetCookie(w, cookie)
-		}
-
-		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 
-	tmpls.ExecuteTemplate(w, "login", loginData{})
+	vals := struct {
+		Image   string `json:"image"`
+		Meteors []struct {
+			T int `json:"t"`
+			R int `json:"r"`
+			B int `json:"b"`
+			L int `json:"l"`
+		} `json:"meteors"`
+	}{}
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{
+			"error": 2,
+			"msg": "Could not process request: ` + err.Error() + `"
+		}`))
+		return
+	}
+
+	err = json.Unmarshal(b, &vals)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{
+			"error": 2,
+			"msg": "Could not process request: ` + err.Error() + `"
+		}`))
+		return
+	}
+
+	if vals.Image == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{
+			"error": 2,
+			"msg": "Could not process request: No image provided"
+		}`))
+		return
+	}
+
+	records := [][]string{}
+
+	for i, v := range vals.Meteors {
+		record := []string{vals.Image, strconv.Itoa(i),
+			strconv.Itoa(v.T),
+			strconv.Itoa(v.R),
+			strconv.Itoa(v.B),
+			strconv.Itoa(v.L),
+			acc.Username,
+		}
+		records = append(records, record)
+	}
+
+	err = csvw.WriteAll(records)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{
+			"error": 3,
+			"msg": "Could not save data: ` + err.Error() + `"
+		}`))
+		return
+	}
+
+	w.Write([]byte(`{
+		"error": 0,
+		"msg": "` + getImage() + `"
+	}`))
 }
