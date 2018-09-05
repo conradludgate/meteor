@@ -70,8 +70,8 @@ window.onload = function() {
 		height = maxheight;
 	}
 
-	// width = Math.ceil(width);
-	// height = Math.ceil(height);
+	width = Math.ceil(width);
+	height = Math.ceil(height);
 
 	// Create app
 	app = new PIXI.Application(width, height, {backgroundColor : 0xfff});
@@ -89,7 +89,7 @@ window.onload = function() {
 	//Add the image to the stage
 	app.stage.addChild(container);
 
-	loadImage("images/image0000.jpg")
+	loadImage("images/NLO_Main_2D_20160821-2355.jpg")
 }
 
 function loadImage(img) {
