@@ -53,7 +53,7 @@ func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 		if cookie, err := r.Cookie("account"); err == nil {
 			acc := Account{}
 			err = s.Decode("account", cookie.Value, &acc)
-			if err != nil || acc.RemoteAddr != r.RemoteAddr {
+			if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
 				http.Redirect(w, r, "/login/", http.StatusSeeOther)
 				return
 			}
@@ -78,7 +78,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 	if cookie, err := r.Cookie("account"); err == nil {
 		acc := Account{}
 		err = s.Decode("account", cookie.Value, &acc)
-		if err == nil && acc.RemoteAddr == r.RemoteAddr {
+		if err == nil && acc.RemoteAddr == r.Header.Get("X-Real-IP") {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -109,13 +109,17 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 
 		if err := bcrypt.CompareHashAndPassword(hash, []byte(p)); err == nil {
 			// user logged in correctly
-			encoded, err := s.Encode("account", Account{e, r.RemoteAddr})
+			encoded, err := s.Encode("account", Account{e, r.Header.Get("X-Real-IP")})
 			if err == nil {
 				cookie := &http.Cookie{
-					Name:    "account",
-					Value:   encoded,
+					Name:  "account",
+					Value: encoded,
+
 					Expires: time.Now().Add(time.Minute * 60),
 					MaxAge:  60 * 60,
+
+					Domain: "mesa.cwp.io",
+					Path:   "/",
 				}
 				http.SetCookie(w, cookie)
 			}
@@ -168,19 +172,6 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err := checkmail.ValidateHost(e)
-		if err != nil {
-			log.Println("Host error:", err.Error())
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				e,
-				[]alert{
-					alert{"Users must provide a valid email address", "amber"},
-				},
-				1,
-			})
-			return
-		}
-
 		if q != p {
 			tmpls.ExecuteTemplate(w, "login", loginData{
 				e,
@@ -216,13 +207,17 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		encoded, err := s.Encode("account", Account{e, r.RemoteAddr})
+		encoded, err := s.Encode("account", Account{e, r.Header.Get("X-Real-IP")})
 		if err == nil {
 			cookie := &http.Cookie{
-				Name:    "account",
-				Value:   encoded,
+				Name:  "account",
+				Value: encoded,
+
 				Expires: time.Now().Add(time.Minute * 60),
 				MaxAge:  60 * 60,
+
+				Domain: "mesa.cwp.io",
+				Path:   "/",
 			}
 			http.SetCookie(w, cookie)
 		}
