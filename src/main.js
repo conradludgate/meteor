@@ -16,14 +16,41 @@ let cross = undefined;
 document.addEventListener("wheel", onZoom, false);
 
 function onZoom(event) {
-	console.log(event)
 	zoom *= Math.pow(2, -event.deltaY / 10)
 	if (zoom < 1) zoom = 1;
+	if (zoom > 512) zoom = 16;
 
 	let mouse = app.renderer.plugins.interaction.mouse.global;
 	container.scale.set(zoom);
 	container.x = - (zoom-1) * mouse.x;
 	container.y = - (zoom-1) * mouse.y;
+
+	let active = container.getChildByName("active");
+	if (!active) return;
+
+	active.children.forEach((p) => {
+		if (p.name !== "rect") {
+			p.scale.set(2/zoom);
+			p.x = p.realx - 9/zoom;
+			p.y = p.realy - 9/zoom;
+		} else {
+			let left = p.x;
+			let top = p.y;
+			let w = p.width - p.lineWidth;
+			let h = p.height - p.lineWidth;
+			p.destroy();
+
+			g = new PIXI.Graphics();
+			g.lineStyle(4/zoom, 0xff0000);
+			g.drawRect(0, 0, w, h);
+			g.name = "rect";
+
+			g.x = left;
+			g.y = top;
+
+			active.addChild(g);
+		}
+	});
 }
 
 window.onload = function() {
@@ -113,10 +140,39 @@ function onMove() {
 	if (mouse.x < 0 || mouse.x > app.screen.width ||
 		mouse.y < 0 || mouse.y > app.screen.height) { 
 
+		if (zoom === 1) return;
+
 		// If not, reset
 		this.scale.set(1);
 		this.x = 0;
 		this.y = 0;
+
+		let active = container.getChildByName("active");
+		if (!active) return;
+		
+		active.children.forEach((p) => {
+			if (p.name !== "rect") {
+				p.scale.set(2);
+				p.x = p.realx - 9;
+				p.y = p.realy - 9;
+			} else {
+				let left = p.x;
+				let top = p.y;
+				let w = p.width - p.lineWidth;
+				let h = p.height - p.lineWidth;
+				p.destroy();
+
+				g = new PIXI.Graphics();
+				g.lineStyle(4, 0xff0000);
+				g.drawRect(0, 0, w, h);
+				g.name = "rect";
+
+				g.x = left;
+				g.y = top;
+
+				active.addChild(g);
+			}
+		});
 		return; 
 	}
 	
@@ -140,8 +196,11 @@ function onDown() {
 
 	// Make a circle where the cursor is
 	let circle = new PIXI.Sprite(red);
-	circle.x = mouse.x - 4 - 1;
-	circle.y = mouse.y - 4 - 1;
+	circle.realx = mouse.x;
+	circle.realy = mouse.y;
+	circle.scale.set(2/zoom);
+	circle.x = mouse.x - 9/zoom;
+	circle.y = mouse.y - 9/zoom;
 
 	circle.interactive = true;
 	circle
@@ -176,21 +235,21 @@ function update_rect(active) {
 	// Get rectangle bounds
 	let left = width, right = 0, top = height, bottom = 0;
 	active.children.forEach((p) => {
-		if (p.x + 5 < left) left = p.x + 5;
-		if (p.x + 5 > right) right = p.x + 5;
-		if (p.y + 5 < top) top = p.y + 5;
-		if (p.y + 5 > bottom) bottom = p.y + 5;
+		if (p.realx < left) left = p.realx;
+		if (p.realx > right) right = p.realx;
+		if (p.realy < top) top = p.realy;
+		if (p.realy > bottom) bottom = p.realy;
 	});
 
 	// Delete any points inside of the bounds
 	active.children.forEach((p) => {
-		if (p.x + 5 > left && p.x + 5 < right &&
-			p.y + 5 > top && p.y + 5 < bottom) p.destroy();
+		if (p.realx > left && p.realx < right &&
+			p.realy > top && p.realy < bottom) p.destroy();
 	});
 
 	// Draw a rectangle with those bounds
 	g = new PIXI.Graphics();
-	g.lineStyle(2, 0xff0000);
+	g.lineStyle(4/zoom, 0xff0000);
 	g.drawRect(0, 0, right-left, bottom-top);
 	g.name = "rect";
 
