@@ -81,7 +81,7 @@ func openCSV(filename string) (err error) {
 }
 
 func getImage() string {
-	keys := make([]int, len(images))
+	keys := make([]string, len(images))
 
 	i := 0
 	for k := range images {
