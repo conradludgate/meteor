@@ -84,8 +84,8 @@ if ( !( 'innerWidth' in window ) )
 a = 'client';
 e = document.documentElement || document.body;
 }
-let maxwidth = e[ a+'Width' ] - 100;
-let maxheight = e[ a+'Height' ] - 100;
+let maxwidth = e[ a+'Width' ] - 50;
+let maxheight = e[ a+'Height' ] - 50;
 
 // Scale to the width
 ratio  *= maxwidth / width;
@@ -118,15 +118,19 @@ container
 //Add the image to the stage
 app.stage.addChild(container);
 
+let imagename = undefined
+
 function loadImage(img) {
 	container.removeChildren();
 
-	let image = new PIXI.Sprite.fromImage(img);
+	imagename = img;
+	let image = new PIXI.Sprite.fromImage("images/" + img);
 
 	image.anchor.set(0.5);
 	image.scale.set(ratio);
 	image.x = app.screen.width/2;
 	image.y = app.screen.height/2;
+	image.name = "image";
 
 	container.addChild(image);
 }
@@ -256,4 +260,64 @@ function update_rect(active) {
 	g.y = top;
 
 	active.addChild(g);
+}
+
+let id = 0;
+
+function save() {
+	// Get currently active selection container
+	let active = container.getChildByName("active");
+
+	// If there isn't one, nothing to do
+	if (!active) return;
+
+	r = active.getChildByName("rect");
+
+	if (!r) return;
+
+	r.destroy();
+	let left = width, right = 0, top = height, bottom = 0;
+	active.children.forEach((p) => {
+		if (p.realx < left) left = p.realx;
+		if (p.realx > right) right = p.realx;
+		if (p.realy < top) top = p.realy;
+		if (p.realy > bottom) bottom = p.realy;
+	});
+
+	// Draw a rectangle with those bounds
+	g = new PIXI.Graphics();
+	g.lineStyle(2, 0x00ff00);
+	g.drawRect(0, 0, right-left, bottom-top);
+	g.name = (++a).toString();
+
+	g.x = left;
+	g.y = top;
+
+	container.addChild(g);
+	active.destroy();
+}
+
+function submit() {
+	save();
+	let l = container.children.length - 1;
+
+	let data = {"image": imagename, "meteors": Array(l)};
+	for (let i = 0; i < l; i++) {
+		r = container.getChildByName((i+1).toString());
+		data.meteors[i] = {"l": r.x, "t": r.y, "r", r.width-2+r.x, "b", r.height-2+r.y};
+	}
+
+	let XHR = new XMLHttpRequest();
+	XHR.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			d = JSON.parse(XHR.responseText);
+			if (d.error == 0) {
+				loadImage(d.msg);
+			} else {
+				console.log(d);
+			}
+		}
+	};
+	XHR.open("PUSH", "/submit/", true);
+	XHR.send(data);
 }

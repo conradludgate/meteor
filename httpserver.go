@@ -20,6 +20,16 @@ var (
 	s        = securecookie.New(hashKey, blockKey)
 )
 
+func shutdown() {
+	Log("Shutting down server")
+
+	CSVClose()
+	SQLClose()
+	LOGClose()
+
+	os.Exit(0)
+}
+
 func main() {
 	if err := openSqlDB("acc.db"); err != nil {
 		fmt.Println("Could not open database.\n")
@@ -50,35 +60,27 @@ func main() {
 	go func() {
 		for range c {
 			// sig is a ^C, handle it
-			log.Println("Closing...")
-
-			csvw.Flush()
-			if err := csvw.Error(); err != nil {
-				log.Println("Error flushing CSV:", err.Error())
-			}
-			if err := file.Close(); err != nil {
-				log.Println("Error closing CSV:", err.Error())
-			}
-
-			os.Exit(0)
+			shutdown()
 		}
 	}()
 
 	http.HandleFunc("/", HTMLHandle)
 	http.HandleFunc("/login/", LoginHandle)
 	http.HandleFunc("/submit/", SubmitHandle)
+	http.HandleFunc("/admin/", AdminHandle)
+	http.HandleFunc("/adminws/", AdminHandle)
 
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 
-	log.Println("Server has loaded successfully")
+	Log("Server has loaded successfully")
 
 	log.Fatal(http.ListenAndServe(":6374", nil))
 }
 
 func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
+		acc := Account{}
 		if cookie, err := r.Cookie("account"); err == nil {
-			acc := Account{}
 			err = s.Decode("account", cookie.Value, &acc)
 			if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
 				http.Redirect(w, r, "/login/", http.StatusSeeOther)
@@ -86,6 +88,11 @@ func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			http.Redirect(w, r, "/login/", http.StatusSeeOther)
+			return
+		}
+
+		if acc.Username == "admin" {
+			http.Redirect(w, r, "/admin/", http.StatusSeeOther)
 			return
 		}
 
@@ -183,4 +190,27 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 		"error": 0,
 		"msg": "` + getImage() + `"
 	}`))
+
+	Log("Data submitted by", acc.Username, "for", vals.Image)
+}
+
+func AdminHandle(w http.ResponseWriter, r *http.Request) {
+	if cookie, err := r.Cookie("account"); err == nil {
+		acc := Account{}
+		err = s.Decode("account", cookie.Value, &acc)
+		if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
+			http.Redirect(w, r, "/login/", http.StatusSeeOther)
+			return
+		}
+		if acc.Username != "admin" {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+	} else {
+		http.Redirect(w, r, "/login/", http.StatusSeeOther)
+		return
+	}
+
+	tmpls.ExecuteTemplate(w, "admin", nil)
+	return
 }

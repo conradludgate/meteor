@@ -9,26 +9,19 @@
 </head>
 <body>
 	<div id="content">
-		<span id="title">Meteor Analysis</span>
-		
-		<!-- <img src="https://files.conradludgate.com/img/me.jpg"/> -->
-
 		<div id="img">
 		</div>
-
-		<!-- <div id="input">
-			<input type="text" name="tl">
-			<input type="text" name="tr"> <br />
-			<input type="text" name="bl">
-			<input type="text" name="bl"> <br />
-			<input type="button" name="submit" text="Submit">
-		</div> -->
+		
+		<div id="buttons">
+			<button onclick="save()">Save</button>
+			<button onclick="submit()">Submit</button>
+		</div>
 	</div>
 
 	<script src="/pixi.min.js"></script>
 	<script src="/main.js"></script>
 	<script>
-		loadImage("images/{{ . }}");
+		loadImage("{{ . }}");
 	</script>
 </body>
 </html>

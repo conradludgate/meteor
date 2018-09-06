@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	select_hash *sql.Stmt
-	insert_acc  *sql.Stmt
-	update_hash *sql.Stmt
+	select_hash  *sql.Stmt
+	insert_acc   *sql.Stmt
+	update_hash  *sql.Stmt
+	insert_admin *sql.Stmt
+	select_admin *sql.Stmt
 
 	db *sql.DB
 )
@@ -25,6 +27,11 @@ CREATE TABLE IF NOT EXISTS accounts (
 	id 		PRIMARY_KEY INTEGER,
 	email 	STRING UNIQUE,
 	hash 	BLOB
+);
+
+CREATE TABLE IF NOT EXISTS admin (
+	id 		PRIMARY_KEY INTEGER,
+	email	STRING UNIQUE
 );
 `)
 
@@ -52,5 +59,42 @@ INSERT INTO accounts (email,hash) VALUES(?,?);
 UPDATE accounts SET hash=? WHERE email=?;
 `)
 
+	if err != nil {
+		return
+	}
+
+	select_admin, err = db.Prepare(`
+SELECT email FROM admin WHERE email=?;
+`)
+
+	if err != nil {
+		return
+	}
+
+	insert_admin, err = db.Prepare(`
+INSERT INTO admin (email) VALUES(?);
+`)
+
 	return
+}
+
+func SQLClose() {
+	if err := db.Close(); err != nil {
+		Log("Error closing DB:", err.Error())
+	}
+	if err := select_hash.Close(); err != nil {
+		Log("Error closing prepared statement:", err.Error())
+	}
+	if err := insert_acc.Close(); err != nil {
+		Log("Error closing prepared statement:", err.Error())
+	}
+	if err := update_hash.Close(); err != nil {
+		Log("Error closing prepared statement:", err.Error())
+	}
+	if err := insert_admin.Close(); err != nil {
+		Log("Error closing prepared statement:", err.Error())
+	}
+	if err := select_admin.Close(); err != nil {
+		Log("Error closing prepared statement:", err.Error())
+	}
 }

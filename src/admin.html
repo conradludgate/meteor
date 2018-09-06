@@ -1,0 +1,38 @@
+{{ define "admin" }}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MESA</title>
+	<link rel="stylesheet" type="text/css" href="admin.css">
+	<link rel="icon" href="https://cwp.io/meteor-icon.png">
+</head>
+<body>
+	<div id="content">
+		<!-- Processed data -->
+		<span id="proc"></span> 
+		
+		<div id="log">
+		</div>
+	</div>
+	<script>
+		socket = new WebSocket("/adminws");
+		socket.onmessage = function (event) {
+			d = JSON.parse(event.data)
+			if (d.type == 0) {
+				d.msg.forEach((m) => {
+					span = document.createElement("span");
+					text = document.createTextNode(m);
+					span.appendChild(text);
+					span.class = "log";
+					document.getElementById("log").appendChild(span)
+				});
+			} else {
+				document.getElementById("proc").innerHTML = d.msg[0];
+			}
+		};
+	</script>
+</body>
+</html>
+
+{{ end }}

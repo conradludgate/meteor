@@ -97,3 +97,13 @@ func getImage() string {
 
 	return keys[i]
 }
+
+func CSVClose() {
+	csvw.Flush()
+	if err := csvw.Error(); err != nil {
+		Log("Error flushing CSV:", err.Error())
+	}
+	if err := file.Close(); err != nil {
+		Log("Error closing CSV:", err.Error())
+	}
+}
