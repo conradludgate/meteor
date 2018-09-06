@@ -21,7 +21,7 @@
 	<script src="/pixi.min.js"></script>
 	<script src="/main.js"></script>
 	<script>
-		loadImage("{{ . }}");
+		window.onload = () => { loadImage("{{ . }}"); };
 	</script>
 </body>
 </html>
