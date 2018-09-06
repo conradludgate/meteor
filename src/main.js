@@ -306,7 +306,7 @@ function submit() {
 	let data = {"image": imagename, "meteors": Array(l)};
 	for (let i = 0; i < l; i++) {
 		r = container.getChildByName((i+1).toString());
-		data.meteors[i] = {"l": r.x, "t": r.y, "r", r.width-2+r.x, "b", r.height-2+r.y};
+		data.meteors[i] = {"l": r.x, "t": r.y, "r": r.width-2+r.x, "b": r.height-2+r.y};
 	}
 
 	let XHR = new XMLHttpRequest();
