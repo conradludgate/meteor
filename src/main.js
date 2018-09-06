@@ -288,7 +288,7 @@ function save() {
 	g = new PIXI.Graphics();
 	g.lineStyle(2, 0x00ff00);
 	g.drawRect(0, 0, right-left, bottom-top);
-	g.name = (++a).toString();
+	g.name = (a++).toString();
 
 	g.x = left;
 	g.y = top;
@@ -299,11 +299,10 @@ function save() {
 
 function submit() {
 	save();
-	let l = container.children.length - 1;
 
-	let data = {"image": imagename, "meteors": Array(l)};
-	for (let i = 0; i < l; i++) {
-		r = container.getChildByName((i+1).toString());
+	let data = {"image": imagename, "meteors": Array(a)};
+	for (let i = 0; i < a; i++) {
+		r = container.children[i+1];
 		data.meteors[i] = {"l": r.x, "t": r.y, "r": r.width-2+r.x, "b": r.height-2+r.y};
 	}
 
