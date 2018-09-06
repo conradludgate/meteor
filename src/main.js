@@ -288,7 +288,7 @@ function save() {
 	g = new PIXI.Graphics();
 	g.lineStyle(2, 0x00ff00);
 	g.drawRect(0, 0, right-left, bottom-top);
-	g.name = (a++).toString();
+	g.name = (id++).toString();
 
 	g.x = left;
 	g.y = top;
@@ -300,8 +300,8 @@ function save() {
 function submit() {
 	save();
 
-	let data = {"image": imagename, "meteors": Array(a)};
-	for (let i = 0; i < a; i++) {
+	let data = {"image": imagename, "meteors": Array(id)};
+	for (let i = 0; i < id; i++) {
 		r = container.children[i+1];
 		data.meteors[i] = {"l": r.x, "t": r.y, "r": r.width-2+r.x, "b": r.height-2+r.y};
 	}
@@ -318,5 +318,6 @@ function submit() {
 		}
 	};
 	XHR.open("PUSH", "/submit/", true);
-	XHR.send(data);
+	console.log(data);
+	XHR.send(JSON.stringify(data));
 }

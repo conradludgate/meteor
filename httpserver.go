@@ -68,7 +68,7 @@ func main() {
 	http.HandleFunc("/login/", LoginHandle)
 	http.HandleFunc("/submit/", SubmitHandle)
 	http.HandleFunc("/admin/", AdminHandle)
-	http.HandleFunc("/adminws/", AdminHandle)
+	http.HandleFunc("/adminws/", AdminWSHandle)
 
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 
