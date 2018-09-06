@@ -11,6 +11,9 @@ import (
 // CSV Format
 // IMG | ID | TOP | RIGHT | BOTTOM | LEFT | USER
 
+var toprocess int = 0
+var processed int = 0
+
 var images map[string]bool
 var file *os.File
 var csvw *csv.Writer
@@ -23,6 +26,8 @@ func openCSV(filename string) (err error) {
 	if err != nil {
 		return err
 	}
+
+	toprocess = len(files)
 
 	images = make(map[string]bool, len(files))
 
@@ -71,7 +76,8 @@ func openCSV(filename string) (err error) {
 
 	for _, rec := range records {
 		if len(rec) > 0 {
-			delete(images, rec[0])
+			images[rec[0]] = false
+			processed++
 		}
 	}
 

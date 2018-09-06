@@ -16,7 +16,7 @@
 		</div>
 	</div>
 	<script>
-		socket = new WebSocket("/adminws");
+		socket = new WebSocket("wss://mesa.cwp.io/adminws/");
 		socket.onmessage = function (event) {
 			d = JSON.parse(event.data)
 			if (d.type == 0) {
