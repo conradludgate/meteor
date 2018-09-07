@@ -78,19 +78,13 @@ func main() {
 
 func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
-		acc := Account{}
-		if cookie, err := r.Cookie("account"); err == nil {
-			err = s.Decode("account", cookie.Value, &acc)
-			if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
-				http.Redirect(w, r, "/login/", http.StatusSeeOther)
-				return
-			}
-		} else {
+		c, email := CheckSession(w, r)
+		if !c {
 			http.Redirect(w, r, "/login/", http.StatusSeeOther)
 			return
 		}
 
-		if acc.Username == "admin" {
+		if email == "admin" {
 			http.Redirect(w, r, "/admin/", http.StatusSeeOther)
 			return
 		}
@@ -103,18 +97,8 @@ func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func SubmitHandle(w http.ResponseWriter, r *http.Request) {
-	acc := Account{}
-	if cookie, err := r.Cookie("account"); err == nil {
-		err = s.Decode("account", cookie.Value, &acc)
-		if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{
-				"error": 1,
-				"msg": "Login required"
-			}`))
-			return
-		}
-	} else {
+	c, email := CheckSession(w, r)
+	if !c {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{
 			"error": 1,
@@ -154,7 +138,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = submit(vals, acc.Username)
+	err = submit(vals, email)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{
@@ -169,23 +153,18 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 		"msg": "` + getImage() + `"
 	}`))
 
-	Log("Data submitted by", acc.Username, "for", vals.Image)
+	Log("Data submitted by", email, "for", vals.Image)
 }
 
 func AdminHandle(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie("account"); err == nil {
-		acc := Account{}
-		err = s.Decode("account", cookie.Value, &acc)
-		if err != nil || acc.RemoteAddr != r.Header.Get("X-Real-IP") {
-			http.Redirect(w, r, "/login/", http.StatusSeeOther)
-			return
-		}
-		if acc.Username != "admin" {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-	} else {
+	c, email := CheckSession(w, r)
+	if !c {
 		http.Redirect(w, r, "/login/", http.StatusSeeOther)
+		return
+	}
+
+	if email != "admin" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 

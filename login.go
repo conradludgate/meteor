@@ -1,25 +1,111 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Account struct {
-	Username   string
-	RemoteAddr string
+type Session struct {
+	RemoteAddr string    `json:"-"`
+	Expires    time.Time `json:"-"`
+	Online     bool      `json:"online"`
+}
+
+var sessions map[string]Session
+
+const SessionAge int = 60 * 60 // 1 hour
+
+func LoginTemplate(w io.Writer, e string, t int, msg string, level string) {
+	tmpls.ExecuteTemplate(w, "login", loginData{
+		// submit,
+		e,
+		[]alert{
+			alert{msg, level},
+		},
+		t,
+	})
+}
+
+func CloseSession(w http.ResponseWriter, email string) {
+	cookie := &http.Cookie{
+		Name: "account",
+
+		Expires: time.Unix(0, 0),
+		MaxAge:  -1,
+
+		Domain: "mesa.cwp.io",
+		Path:   "/",
+	}
+	http.SetCookie(w, cookie)
+
+	if _, ok := sessions[email]; ok {
+		sessions[email] = Session{
+			"",
+			time.Unix(0, 0),
+			false,
+		}
+
+		for _, conn := range conns {
+			conn.WriteJSON(WSMessage{USER, sessions})
+		}
+	}
+}
+
+func MakeSession(w http.ResponseWriter, r *http.Request, email string, seconds int) {
+	encoded, err := s.Encode("account", email)
+	if err == nil {
+		cookie := &http.Cookie{
+			Name:  "account",
+			Value: encoded,
+
+			Expires: time.Now().Add(time.Duration(seconds) * time.Second),
+			MaxAge:  seconds,
+
+			Domain: "mesa.cwp.io",
+			Path:   "/",
+		}
+		http.SetCookie(w, cookie)
+
+		sessions[email] = Session{
+			r.Header.Get("X-Real-IP"),
+			time.Now().Add(time.Duration(seconds) * time.Second),
+			true,
+		}
+
+		for _, conn := range conns {
+			conn.WriteJSON(WSMessage{USER, sessions})
+		}
+	}
+}
+
+func CheckSession(w http.ResponseWriter, r *http.Request) (t bool, email string) {
+	if cookie, err := r.Cookie("account"); err == nil {
+		err = s.Decode("account", cookie.Value, &email)
+		if err == nil {
+			s := sessions[email]
+			if s.Online &&
+				s.RemoteAddr == r.Header.Get("X-Real-IP") &&
+				s.Expires.After(time.Now()) {
+
+				MakeSession(w, r, email, SessionAge)
+
+				return true, email
+			}
+		}
+	}
+
+	CloseSession(w, email)
+
+	return false, email
 }
 
 func LoginHandle(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie("account"); err == nil {
-		acc := Account{}
-		err = s.Decode("account", cookie.Value, &acc)
-		if err == nil && acc.RemoteAddr == r.Header.Get("X-Real-IP") {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
+	if c, _ := CheckSession(w, r); c {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
 
 	t := r.FormValue("type")
@@ -33,37 +119,14 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		var hash []byte
 		if err := select_hash.QueryRow(e).Scan(&hash); err != nil {
 			if e == "" {
-				tmpls.ExecuteTemplate(w, "login", loginData{
-					// submit,
-					e,
-					[]alert{
-						alert{"Email or password is incorrect", "amber"},
-					},
-					0,
-				})
+				LoginTemplate(w, e, 0, "Email or password is incorrect", "amber")
 				return
 			}
 		}
 
 		if err := bcrypt.CompareHashAndPassword(hash, []byte(p)); err == nil {
 			// user logged in correctly
-			encoded, err := s.Encode("account", Account{e, r.Header.Get("X-Real-IP")})
-			if err == nil {
-				cookie := &http.Cookie{
-					Name:  "account",
-					Value: encoded,
-
-					Expires: time.Now().Add(time.Minute * 60),
-					MaxAge:  60 * 60,
-
-					Domain: "mesa.cwp.io",
-					Path:   "/",
-				}
-				http.SetCookie(w, cookie)
-			}
-
-			// // Submit the data if there is any
-			// log.Println(e, submit)
+			MakeSession(w, r, e, SessionAge)
 
 			Log("User logged in:", e)
 
@@ -71,108 +134,46 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		tmpls.ExecuteTemplate(w, "login", loginData{
-			// submit,
-			e,
-			[]alert{
-				alert{"Email or password is incorrect", "amber"},
-			},
-			0,
-		})
+		LoginTemplate(w, e, 0, "Email or password is incorrect", "amber")
 		return
 
 	} else if t == "create" {
 		if e == "" {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				// submit,
-				e,
-				[]alert{
-					alert{"Users must provide a valid email address", "amber"},
-				},
-				1,
-			})
+			LoginTemplate(w, e, 1, "Users must provide a valid email address", "amber")
 			return
 		}
 
 		if p == "" {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				// submit,
-				e,
-				[]alert{
-					alert{"Users must provide a password", "amber"},
-				},
-				1,
-			})
+			LoginTemplate(w, e, 1, "Users must provide a password", "amber")
 			return
 		}
 
-		if e != "admin" {
-			var email string
-			if err := select_admin.QueryRow(e).Scan(&email); err != nil || email != e {
-				tmpls.ExecuteTemplate(w, "login", loginData{
-					// submit,
-					e,
-					[]alert{
-						alert{"Email address not authorised by admin", "amber"},
-					},
-					1,
-				})
-				return
-			}
+		// var email string
+		// if err := select_admin.QueryRow(e).Scan(&email); err != nil || email != e {
+
+		if _, ok := sessions[e]; e != "admin" && !ok {
+			LoginTemplate(w, e, 1, "Email address not authorised by admin", "amber")
+			return
 		}
 
 		if q != p {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				// submit,
-				e,
-				[]alert{
-					alert{"Passwords did not match", "amber"},
-				},
-				1,
-			})
+			LoginTemplate(w, e, 1, "Passwords did not match", "amber")
 			return
 		}
 
 		hash, err := bcrypt.GenerateFromPassword([]byte(p), 13)
 		if err != nil {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				// submit,
-				e,
-				[]alert{
-					alert{"Please enter a different password", "amber"},
-				},
-				1,
-			})
+			LoginTemplate(w, e, 1, "Please enter a different password", "amber")
 			return
 		}
 
 		_, err = insert_acc.Exec(e, hash)
 		if err != nil {
-			tmpls.ExecuteTemplate(w, "login", loginData{
-				// submit,
-				e,
-				[]alert{
-					alert{"Account already exists", "amber"},
-				},
-				1,
-			})
+			LoginTemplate(w, e, 1, "Account already exists", "amber")
 			return
 		}
 
-		encoded, err := s.Encode("account", Account{e, r.Header.Get("X-Real-IP")})
-		if err == nil {
-			cookie := &http.Cookie{
-				Name:  "account",
-				Value: encoded,
-
-				Expires: time.Now().Add(time.Minute * 60),
-				MaxAge:  60 * 60,
-
-				Domain: "mesa.cwp.io",
-				Path:   "/",
-			}
-			http.SetCookie(w, cookie)
-		}
+		MakeSession(w, r, e, SessionAge)
 
 		Log("Account Created:", e)
 
@@ -180,14 +181,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if submit != "" {
-	// 	tmpls.ExecuteTemplate(w, "login", loginData{
-	// 		// submit,
-	// 		"",
-	// 		[]alert{
-	// 			alert{"Session timed out. Please login again", "amber"},
-	// 		},
-	// 		0,
-	// 	})
+	// 	LoginTemplate(w, e, 0, "Session timed out. Please login again", "amber")
 	// } else {
 	// 	tmpls.ExecuteTemplate(w, "login", loginData{})
 	// }

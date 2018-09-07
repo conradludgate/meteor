@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -59,6 +60,19 @@ func RegisterConn(conn *websocket.Conn) error {
 	}
 
 	err := conn.WriteJSON(WSMessage{LOG, history})
+	if err != nil {
+		return err
+	}
+
+	err = conn.WriteJSON(WSMessage{PROC, []string{
+		strconv.Itoa(processed),
+		strconv.Itoa(toprocess),
+	}})
+	if err != nil {
+		return err
+	}
+
+	err = conn.WriteJSON(WSMessage{USER, sessions})
 	if err != nil {
 		return err
 	}

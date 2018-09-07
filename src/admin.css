@@ -1,7 +1,23 @@
 .log {
 	display: block;
+	overflow-y: scroll;
 }
 
 #log {
 	border: 1px solid #ccc;
+	width: 45%;
+	padding: auto;
+	
+	display: flex;
+	flex-direction: column-reverse;
+}
+
+#users {
+	border: 1px solid #ccc;
+	width: 45%;
+	padding: auto;
+}
+
+#container {
+	display: flex;
 }

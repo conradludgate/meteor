@@ -1,8 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/websocket"
 )
@@ -10,11 +10,12 @@ import (
 const (
 	LOG int = iota
 	PROC
+	USER
 )
 
 type WSMessage struct {
-	Type int      `json:"type"`
-	Msg  []string `json:"msg"`
+	Type int         `json:"type"`
+	Msg  interface{} `json:"msg"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -23,6 +24,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
+	c, email := CheckSession(w, r)
+
+	if !c || email != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
@@ -34,16 +41,18 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 		return conn.Close()
 	})
 
-	conn.WriteJSON(WSMessage{PROC, []string{
-		strconv.Itoa(processed),
-		strconv.Itoa(toprocess),
-	}})
-
 	for {
-		if _, _, err := conn.NextReader(); err != nil {
+		_, r, err := conn.NextReader()
+		if err != nil {
 			RemoveConn(conn)
 			conn.Close()
 			break
 		}
+		b, err := ioutil.ReadAll(r)
+		if err != nil {
+			continue
+		}
+		email := string(b)
+		insert_admin.Exec(email)
 	}
 }

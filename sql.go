@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -11,7 +12,6 @@ var (
 	insert_acc   *sql.Stmt
 	update_hash  *sql.Stmt
 	insert_admin *sql.Stmt
-	select_admin *sql.Stmt
 
 	db *sql.DB
 )
@@ -22,7 +22,7 @@ func openSqlDB(filename string) (err error) {
 		return
 	}
 
-	_, err = db.Exec(`
+	rows, err := db.Query(`
 CREATE TABLE IF NOT EXISTS accounts (
 	id 		PRIMARY_KEY INTEGER,
 	email 	STRING UNIQUE,
@@ -33,9 +33,31 @@ CREATE TABLE IF NOT EXISTS admin (
 	id 		PRIMARY_KEY INTEGER,
 	email	STRING UNIQUE
 );
+
+SELECT email FROM admin;
 `)
 
-	return
+	if err != nil {
+		return
+	}
+
+	defer rows.Close()
+
+	sessions = map[string]Session{}
+
+	for rows.Next() {
+		email := ""
+		if err = rows.Scan(&email); err != nil {
+			return
+		}
+		sessions[email] = Session{
+			"",
+			time.Unix(0, 0),
+			false,
+		}
+	}
+
+	return rows.Err()
 }
 
 func sqlPrepareStmts() (err error) {
@@ -63,14 +85,6 @@ UPDATE accounts SET hash=? WHERE email=?;
 		return
 	}
 
-	select_admin, err = db.Prepare(`
-SELECT email FROM admin WHERE email=?;
-`)
-
-	if err != nil {
-		return
-	}
-
 	insert_admin, err = db.Prepare(`
 INSERT INTO admin (email) VALUES(?);
 `)
@@ -92,9 +106,6 @@ func SQLClose() {
 		Log("Error closing prepared statement:", err.Error())
 	}
 	if err := insert_admin.Close(); err != nil {
-		Log("Error closing prepared statement:", err.Error())
-	}
-	if err := select_admin.Close(); err != nil {
 		Log("Error closing prepared statement:", err.Error())
 	}
 }
