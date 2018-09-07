@@ -179,17 +179,18 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 
-	if submit != "" {
-		tmpls.ExecuteTemplate(w, "login", loginData{
-			// submit,
-			"",
-			[]alert{
-				alert{"Session timed out. Please login again", "amber"},
-			},
-			0,
-		})
-	} else {
-		tmpls.ExecuteTemplate(w, "login", loginData{})
-	}
+	// if submit != "" {
+	// 	tmpls.ExecuteTemplate(w, "login", loginData{
+	// 		// submit,
+	// 		"",
+	// 		[]alert{
+	// 			alert{"Session timed out. Please login again", "amber"},
+	// 		},
+	// 		0,
+	// 	})
+	// } else {
+	// 	tmpls.ExecuteTemplate(w, "login", loginData{})
+	// }
 
+	tmpls.ExecuteTemplate(w, "login", loginData{})
 }
