@@ -12,7 +12,7 @@ type alert struct {
 }
 
 type loginData struct {
-	Submit string
+	// Submit string
 	Email  string
 	Alerts []alert
 	Tab    int

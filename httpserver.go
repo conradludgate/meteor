@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 
 	"github.com/gorilla/securecookie"
 )
@@ -124,15 +123,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vals := struct {
-		Image   string `json:"image"`
-		Meteors []struct {
-			T int `json:"t"`
-			R int `json:"r"`
-			B int `json:"b"`
-			L int `json:"l"`
-		} `json:"meteors"`
-	}{}
+	vals := submitData{}
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -163,20 +154,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	records := [][]string{}
-
-	for i, v := range vals.Meteors {
-		record := []string{vals.Image, strconv.Itoa(i),
-			strconv.Itoa(v.T),
-			strconv.Itoa(v.R),
-			strconv.Itoa(v.B),
-			strconv.Itoa(v.L),
-			acc.Username,
-		}
-		records = append(records, record)
-	}
-
-	err = csvw.WriteAll(records)
+	err = submit(vals, acc.Username)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{

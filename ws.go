@@ -22,12 +22,8 @@ var upgrader = websocket.Upgrader{
 }
 
 func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
-	Log("Websocket connection")
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("not a websocket connection"))
 		return
 	}
 

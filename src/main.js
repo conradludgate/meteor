@@ -303,7 +303,12 @@ function submit() {
 	let data = {"image": imagename, "meteors": Array(id)};
 	for (let i = 0; i < id; i++) {
 		r = container.children[i+1];
-		data.meteors[i] = {"l": r.x, "t": r.y, "r": r.width-2+r.x, "b": r.height-2+r.y};
+		data.meteors[i] = {
+			"l": Math.round(r.x/ratio), 
+			"t": Math.round(r.y/ratio), 
+			"r": Math.round((r.width-2+r.x)/ratio), 
+			"b": Math.round((r.height-2+r.y)/ratio)
+		};
 	}
 
 	let XHR = new XMLHttpRequest();
@@ -312,6 +317,9 @@ function submit() {
 			d = JSON.parse(XHR.responseText);
 			if (d.error == 0) {
 				loadImage(d.msg);
+			} else if (d.error == 3) {
+				window.localStorage.setItem("submit", JSON.stringify(data));
+				window.location.replace("/login");
 			} else {
 				console.log(d);
 			}

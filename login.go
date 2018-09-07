@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -24,10 +23,10 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t := r.FormValue("type")
-	e := r.FormValue("e")      // email
-	p := r.FormValue("p")      // password
-	q := r.FormValue("q")      // password confirm
-	submit := r.FormValue("s") // To Submit
+	e := r.FormValue("e") // email
+	p := r.FormValue("p") // password
+	q := r.FormValue("q") // password confirm
+	// submit := r.FormValue("s") // To Submit
 
 	if t == "login" {
 
@@ -35,7 +34,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		if err := select_hash.QueryRow(e).Scan(&hash); err != nil {
 			if e == "" {
 				tmpls.ExecuteTemplate(w, "login", loginData{
-					submit,
+					// submit,
 					e,
 					[]alert{
 						alert{"Email or password is incorrect", "amber"},
@@ -63,8 +62,8 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 				http.SetCookie(w, cookie)
 			}
 
-			// Submit the data if there is any
-			log.Println(e, submit)
+			// // Submit the data if there is any
+			// log.Println(e, submit)
 
 			Log("User logged in:", e)
 
@@ -73,7 +72,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		tmpls.ExecuteTemplate(w, "login", loginData{
-			submit,
+			// submit,
 			e,
 			[]alert{
 				alert{"Email or password is incorrect", "amber"},
@@ -85,7 +84,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 	} else if t == "create" {
 		if e == "" {
 			tmpls.ExecuteTemplate(w, "login", loginData{
-				submit,
+				// submit,
 				e,
 				[]alert{
 					alert{"Users must provide a valid email address", "amber"},
@@ -97,7 +96,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 
 		if p == "" {
 			tmpls.ExecuteTemplate(w, "login", loginData{
-				submit,
+				// submit,
 				e,
 				[]alert{
 					alert{"Users must provide a password", "amber"},
@@ -111,7 +110,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 			var email string
 			if err := select_admin.QueryRow(e).Scan(&email); err != nil || email != e {
 				tmpls.ExecuteTemplate(w, "login", loginData{
-					submit,
+					// submit,
 					e,
 					[]alert{
 						alert{"Email address not authorised by admin", "amber"},
@@ -124,7 +123,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 
 		if q != p {
 			tmpls.ExecuteTemplate(w, "login", loginData{
-				submit,
+				// submit,
 				e,
 				[]alert{
 					alert{"Passwords did not match", "amber"},
@@ -137,7 +136,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		hash, err := bcrypt.GenerateFromPassword([]byte(p), 13)
 		if err != nil {
 			tmpls.ExecuteTemplate(w, "login", loginData{
-				submit,
+				// submit,
 				e,
 				[]alert{
 					alert{"Please enter a different password", "amber"},
@@ -150,7 +149,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		_, err = insert_acc.Exec(e, hash)
 		if err != nil {
 			tmpls.ExecuteTemplate(w, "login", loginData{
-				submit,
+				// submit,
 				e,
 				[]alert{
 					alert{"Account already exists", "amber"},
@@ -182,7 +181,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 
 	if submit != "" {
 		tmpls.ExecuteTemplate(w, "login", loginData{
-			submit,
+			// submit,
 			"",
 			[]alert{
 				alert{"Session timed out. Please login again", "amber"},

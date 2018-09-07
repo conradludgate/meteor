@@ -33,6 +33,7 @@ func Log(msg ...string) {
 	s = time.Now().Format("2006/01/02 15:04:05") + " " + s + "\n"
 
 	io.WriteString(logfile, s)
+	history = append(history, s)
 
 	remove := []*websocket.Conn{}
 

@@ -22,6 +22,26 @@
 	<script src="/main.js"></script>
 	<script>
 		loadImage("{{ . }}");
+		submit = window.localStorage.getItem("submit");
+		if (!!submit) {
+			window.localStorage.removeItem("submit");
+			let XHR = new XMLHttpRequest();
+			XHR.onreadystatechange = function() {
+				if (this.readyState == 4 && this.status == 200) {
+					d = JSON.parse(XHR.responseText);
+					if (d.error == 0) {
+						loadImage(d.msg);
+					} else if (d.error == 3) {
+						window.localStorage.setItem("submit", submit);
+						window.location.replace("/login");
+					} else {
+						console.log(d);
+					}
+				}
+			};
+			XHR.open("PUSH", "/submit/", true)
+			XHR.send(submit);
+		}
 	</script>
 </body>
 </html>
