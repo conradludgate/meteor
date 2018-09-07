@@ -1,3 +1,5 @@
+let id = 0;
+
 socket = new WebSocket("wss://mesa.cwp.io/adminws/");
 socket.onmessage = function (event) {
 	d = JSON.parse(event.data);
@@ -7,10 +9,11 @@ socket.onmessage = function (event) {
 			text = document.createTextNode(m);
 			span.appendChild(text);
 			span.classList.add("log");
-			document.getElementById("log").appendChild(span);
-			// document.getElementById("log").innerHTML = 
-			// 	"<span class='log'>" + m + "</span>" + 
-			// 	document.getElementById("log").innerHTML;
+			span.classList.add((id++) % 2 == 0 ? "even", "odd");
+			//document.getElementById("log").appendChild(span);
+			document.getElementById("log").innerHTML = 
+				span.toString() + 
+				document.getElementById("log").innerHTML;
 		});
 	} else if (d.type == 1) {
 		document.getElementById("proc").innerHTML = "Processed " + d.msg[0] + "/" + d.msg[1] + " images";
@@ -20,7 +23,7 @@ socket.onmessage = function (event) {
 			text = document.createTextNode(email);
 			span.appendChild(text);
 			span.classList.add("user");
-			span.classList.add(d.msg[email] ? "online" : "offline");
+			span.classList.add(d.msg[email].online ? "online" : "offline");
 			document.getElementById("users").appendChild(span);
 		});
 	}

@@ -1,23 +1,29 @@
 .log {
 	display: block;
+	padding: 5px;
 	overflow-y: scroll;
 }
 
 #log {
 	border: 1px solid #ccc;
-	width: 45%;
-	padding: auto;
-	
-	display: flex;
-	flex-direction: column-reverse;
+	width: 50%;
+	height: 100%;
+}
+
+.user {
+  display: block;
 }
 
 #users {
 	border: 1px solid #ccc;
-	width: 45%;
-	padding: auto;
+	width: 50%;
 }
 
 #container {
 	display: flex;
+	height: calc(100vh - 50px);
+}
+
+.offline {
+  color: grey;	
 }
