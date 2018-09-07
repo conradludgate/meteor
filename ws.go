@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 )
@@ -22,8 +23,6 @@ var upgrader = websocket.Upgrader{
 }
 
 func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
-	Log("Admin WS request made")
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
@@ -34,6 +33,11 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 		RemoveConn(conn)
 		return conn.Close()
 	})
+
+	conn.WriteJSON(WSMessage{PROC, []string{
+		strconv.Itoa(processed),
+		strconv.Itoa(toprocess),
+	}})
 
 	for {
 		if _, _, err := conn.NextReader(); err != nil {
