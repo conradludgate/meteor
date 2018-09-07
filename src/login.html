@@ -11,38 +11,40 @@
 <body>
 	<script src="/login.js"></script>
 
-	<div class="tab">
-		<button class="tablinks" onclick="changeTab(0)">Login</button>
-		<button class="tablinks" onclick="changeTab(1)">Create</button>
-	</div>
-
-	<form class="tabcontent" action="/login/" method="POST">
-		<input id="type" type="hidden" name="type" value="login">
-		
-		<div id="email">
-			<span>Email</span>
-			<input type="text" name="e" placeholder="Email Address" value="{{ .Email }}">
+	<div id="content">
+		<div class="tab">
+			<button class="tablinks" onclick="changeTab(0)">Login</button>
+			<button class="tablinks" onclick="changeTab(1)">Create</button>
 		</div>
 
-		<div id="password">
-			<span>Password</span>
-			<input type="password" name="p">
-		</div>
-
-		<div id="confirm" display="none">
-			<span>Confirm Password</span>
-			<input type="password" name="q">
-		</div>
-
-		<input id="submit" type="submit" text="Login">
-	</form>
-
-	<div id="alerts">
-		{{ range .Alerts }}
-			<div class="alert {{ .Level }}">
-				<span class="alertmsg">{{ .Msg }}</span>
+		<form class="tabcontent" action="/login/" method="POST">
+			<input id="type" type="hidden" name="type" value="login">
+			
+			<div id="email">
+				<span>Email</span>
+				<input type="text" name="e" placeholder="Email Address" value="{{ .Email }}">
 			</div>
-		{{ end }}
+
+			<div id="password">
+				<span>Password</span>
+				<input type="password" name="p">
+			</div>
+
+			<div id="confirm" display="none">
+				<span>Confirm Password</span>
+				<input type="password" name="q">
+			</div>
+
+			<input id="submit" type="submit" text="Login">
+		</form>
+
+		<div id="alerts">
+			{{ range .Alerts }}
+				<div class="alert {{ .Level }}">
+					<span class="alertmsg">{{ .Msg }}</span>
+				</div>
+			{{ end }}
+		</div>
 	</div>
 
 	<script>
