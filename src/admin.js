@@ -9,10 +9,10 @@ socket.onmessage = function (event) {
 			text = document.createTextNode(m);
 			span.appendChild(text);
 			span.classList.add("log");
-			span.classList.add((id++) % 2 == 0 ? "even", "odd");
+			span.classList.add((id++) % 2 == 0 ? "even" : "odd");
 			//document.getElementById("log").appendChild(span);
 			document.getElementById("log").innerHTML = 
-				span.toString() + 
+				span.outerHTML + 
 				document.getElementById("log").innerHTML;
 		});
 	} else if (d.type == 1) {
