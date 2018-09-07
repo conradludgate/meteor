@@ -22,6 +22,8 @@ var upgrader = websocket.Upgrader{
 }
 
 func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
+	Log("Admin WS request made")
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
