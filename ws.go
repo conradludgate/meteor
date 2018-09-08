@@ -55,9 +55,6 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// b, _ := ioutil.ReadAll(r)
-		// Log("Websocket message recieved:", string(b))
-
 		var wsr WSRequest
 		err = json.NewDecoder(r).Decode(&wsr)
 		if err != nil {
@@ -66,9 +63,9 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if wsr.Type == 0 {
-			_, err := insert_admin.Exec(email)
+			_, err := insert_admin.Exec(wsr.Data)
 			if err == nil {
-				sessions[email] = Session{
+				sessions[wsr.Data] = Session{
 					"",
 					time.Unix(0, 0),
 					false,
@@ -76,16 +73,16 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 				for _, conn := range conns {
 					conn.WriteJSON(WSMessage{USER, sessions})
 				}
-				Log("Added user", email)
+				Log("Added user", wsr.Data)
 			}
 		} else if wsr.Type == 1 {
-			_, err := delete_admin.Exec(email, email)
+			_, err := delete_admin.Exec(wsr.Data, wsr.Data)
 			if err == nil {
-				delete(sessions, email)
+				delete(sessions, wsr.Data)
 				for _, conn := range conns {
 					conn.WriteJSON(WSMessage{USER, sessions})
 				}
-				Log("Deleted user", email)
+				Log("Deleted user", wsr.Data)
 			}
 		}
 	}
