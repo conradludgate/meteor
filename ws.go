@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -63,8 +62,6 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		Log("Admin request:", strconv.Itoa(wsr.Type), wsr.Data)
-
 		if wsr.Type == 0 {
 			_, err := insert_admin.Exec(wsr.Data)
 			if err == nil {
@@ -86,6 +83,8 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 					conn.WriteJSON(WSMessage{USER, sessions})
 				}
 				Log("Deleted user", wsr.Data)
+			} else {
+				Log("Could not delete user", wsr.Data, err.Error())
 			}
 		}
 	}
