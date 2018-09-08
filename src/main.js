@@ -1,6 +1,5 @@
 let app = undefined;
 let container = undefined;
-let image = undefined;
 
 // Default image size
 let width = 1177;

@@ -23,8 +23,7 @@
 	<script src="/pixi.min.js"></script>
 	<script src="/main.js"></script>
 	<script>
-		//loadImage("{{ . }}");
-		loadImage("/test.jpg");
+		loadImage("{{ . }}");
 		submit = window.localStorage.getItem("submit");
 		if (!!submit) {
 			window.localStorage.removeItem("submit");
