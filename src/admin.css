@@ -49,5 +49,6 @@
 }
 
 #users div {
+	padding: 5px;
 	position: relative;
 }

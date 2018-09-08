@@ -206,6 +206,9 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		Log("Account Created:", e)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else if t == "create" {
+		_, email := CheckSession(w, r)
+		CloseSession(w, email)
 	}
 
 	// if submit != "" {
