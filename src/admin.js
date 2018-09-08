@@ -23,10 +23,10 @@ socket.onmessage = function (event) {
 			if (email != "admin") {
 				div = document.createElement("div");
 				div.onmouseover = () => {
-					this.children[2].hidden = false;
+					div.getElementByClass("delete")[0].hidden = false;
 				}
 				div.onmouseout = () => {
-					this.children[2].hidden = true;
+					div.getElementByClass("delete")[0].hidden = true;
 				}
 
 				span = document.createElement("span");
@@ -37,13 +37,14 @@ socket.onmessage = function (event) {
 
 				div.appendChild(span);
 
-				button = document.createElement("buttom");
+				button = document.createElement("button");
 				text = document.createTextNode("Delete");
 				button.appendChild(text);
 				button.classList.add("delete");
 				button.onclick = () => {
 					deluser(email);
 				}
+				button.hidden = true;
 
 				div.appendChild(button);
 

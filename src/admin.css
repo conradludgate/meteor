@@ -38,8 +38,16 @@
 .delete {
 	color: red;
 	transition: 0.3s;
+
+	position: absolute;
+	top: 0;
+	right: 0;
 }
 
 .odd {
-	background-color: #eee;
+	background-color: #f7f7f7;
+}
+
+#users div {
+	position: relative;
 }

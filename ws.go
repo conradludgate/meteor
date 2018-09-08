@@ -72,6 +72,7 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 				for _, conn := range conns {
 					conn.WriteJSON(WSMessage{USER, sessions})
 				}
+				Log("Added user", email)
 			}
 		} else if wsr.Type == 1 {
 			_, err := delete_admin.Exec(email, email)
@@ -80,6 +81,7 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 				for _, conn := range conns {
 					conn.WriteJSON(WSMessage{USER, sessions})
 				}
+				Log("Deleted user", email)
 			}
 		}
 	}
