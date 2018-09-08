@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -62,7 +63,7 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		Log("Admin request:", wsr)
+		Log("Admin request:", strconv.Itoa(wsr.Type), wsr.Data)
 
 		if wsr.Type == 0 {
 			_, err := insert_admin.Exec(wsr.Data)
