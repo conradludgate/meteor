@@ -95,7 +95,7 @@ INSERT INTO admin (email) VALUES(?);
 
 	delete_admin, err = db.Prepare(`
 DELETE FROM admin WHERE email=?;
-DELETE FROM account WHERE email=?;
+DELETE FROM accounts WHERE email=?;
 `)
 
 	return

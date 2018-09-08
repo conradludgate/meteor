@@ -76,7 +76,7 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 				Log("Added user", wsr.Data)
 			}
 		} else if wsr.Type == 1 {
-			_, err := delete_admin.Exec(wsr.Data)
+			_, err := delete_admin.Exec(wsr.Data, wsr.Data)
 			if err == nil {
 				delete(sessions, wsr.Data)
 				for _, conn := range conns {
