@@ -62,6 +62,8 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		Log("Admin request:", wsr)
+
 		if wsr.Type == 0 {
 			_, err := insert_admin.Exec(wsr.Data)
 			if err == nil {
