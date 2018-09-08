@@ -23,10 +23,10 @@ socket.onmessage = function (event) {
 			if (email != "admin") {
 				div = document.createElement("div");
 				div.onmouseover = () => {
-					div.getElementsByClass("delete")[0].hidden = false;
+					div.getElementsByClassName("delete")[0].hidden = false;
 				}
 				div.onmouseout = () => {
-					div.getElementsByClass("delete")[0].hidden = true;
+					div.getElementsByClassName("delete")[0].hidden = true;
 				}
 
 				span = document.createElement("span");

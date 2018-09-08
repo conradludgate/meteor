@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -54,6 +55,9 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 			conn.Close()
 			break
 		}
+
+		b, _ := ioutil.ReadAll(r)
+		Log("Websocket message recieved:", string(b))
 
 		var wsr WSRequest
 		err = json.NewDecoder(r).Decode(&wsr)
