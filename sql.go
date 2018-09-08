@@ -13,6 +13,7 @@ var (
 	update_hash  *sql.Stmt
 	insert_admin *sql.Stmt
 	delete_admin *sql.Stmt
+	delete_acc   *sql.Stmt
 
 	db *sql.DB
 )
@@ -95,6 +96,13 @@ INSERT INTO admin (email) VALUES(?);
 
 	delete_admin, err = db.Prepare(`
 DELETE FROM admin WHERE email=?;
+`)
+
+	if err != nil {
+		return
+	}
+
+	delete_acc, err = db.Prepare(`
 DELETE FROM accounts WHERE email=?;
 `)
 
@@ -118,6 +126,9 @@ func SQLClose() {
 		Log("Error closing prepared statement:", err.Error())
 	}
 	if err := delete_admin.Close(); err != nil {
+		Log("Error closing prepared statement:", err.Error())
+	}
+	if err := delete_acc.Close(); err != nil {
 		Log("Error closing prepared statement:", err.Error())
 	}
 }

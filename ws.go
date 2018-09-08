@@ -74,9 +74,12 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 					conn.WriteJSON(WSMessage{USER, sessions})
 				}
 				Log("Added user", wsr.Data)
+			} else {
+				Log("Could not add user", wsr.Data, err.Error())
 			}
 		} else if wsr.Type == 1 {
-			_, err := delete_admin.Exec(wsr.Data, wsr.Data)
+			_, err := delete_admin.Exec(wsr.Data)
+			delete_acc.Exec(wsr.Data)
 			if err == nil {
 				delete(sessions, wsr.Data)
 				for _, conn := range conns {
