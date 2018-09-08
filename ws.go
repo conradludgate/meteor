@@ -58,6 +58,7 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 		var wsr WSRequest
 		err = json.NewDecoder(r).Decode(&wsr)
 		if err != nil {
+			Log("Error decoding admin message:", err.Error())
 			continue
 		}
 
