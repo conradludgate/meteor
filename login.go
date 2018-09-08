@@ -16,6 +16,34 @@ type Session struct {
 
 var sessions map[string]Session
 
+func TimeoutTicker(done chan bool) {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-done:
+			return
+		case t := <-ticker.C:
+			update := false
+			for k, v := range sessions {
+				if t.After(v.Expires) {
+					sessions[k] = Session{
+						"",
+						time.Unix(0, 0),
+						false,
+					}
+					update = true
+				}
+			}
+			if update {
+				for _, conn := range conns {
+					conn.WriteJSON(WSMessage{USER, sessions})
+				}
+			}
+		}
+	}
+}
+
 const SessionAge int = 60 * 60 // 1 hour
 
 func LoginTemplate(w io.Writer, e string, t int, msg string, level string) {

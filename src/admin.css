@@ -1,22 +1,23 @@
 .log {
 	display: block;
 	padding: 5px;
-	overflow-y: scroll;
 }
 
 #log {
 	border: 1px solid #ccc;
 	width: 50%;
 	height: 100%;
+	overflow-y: scroll;
 }
 
-.user {
-  display: block;
-}
+/*.user {
+	display: block;
+}*/
 
-#users {
+#userdata {
 	border: 1px solid #ccc;
 	width: 50%;
+	position: relative;
 }
 
 #container {
@@ -25,5 +26,20 @@
 }
 
 .offline {
-  color: grey;	
+	color: grey;	
+}
+
+#adduser {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+}
+
+.delete {
+	color: red;
+	transition: 0.3s;
+}
+
+.odd {
+	background-color: #eee;
 }

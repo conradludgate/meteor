@@ -1,8 +1,9 @@
 package main
 
 import (
-	"io/ioutil"
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,6 +17,11 @@ const (
 type WSMessage struct {
 	Type int         `json:"type"`
 	Msg  interface{} `json:"msg"`
+}
+
+type WSRequest struct {
+	Type int    `json:"type"`
+	Data string `json:"data"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -48,11 +54,33 @@ func AdminWSHandle(w http.ResponseWriter, r *http.Request) {
 			conn.Close()
 			break
 		}
-		b, err := ioutil.ReadAll(r)
+
+		var wsr WSRequest
+		err = json.NewDecoder(r).Decode(&wsr)
 		if err != nil {
 			continue
 		}
-		email := string(b)
-		insert_admin.Exec(email)
+
+		if wsr.Type == 0 {
+			_, err := insert_admin.Exec(email)
+			if err == nil {
+				sessions[email] = Session{
+					"",
+					time.Unix(0, 0),
+					false,
+				}
+				for _, conn := range conns {
+					conn.WriteJSON(WSMessage{USER, sessions})
+				}
+			}
+		} else if wsr.Type == 1 {
+			_, err := delete_admin.Exec(email, email)
+			if err == nil {
+				delete(sessions, email)
+				for _, conn := range conns {
+					conn.WriteJSON(WSMessage{USER, sessions})
+				}
+			}
+		}
 	}
 }
