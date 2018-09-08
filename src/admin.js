@@ -23,10 +23,10 @@ socket.onmessage = function (event) {
 			if (email != "admin") {
 				div = document.createElement("div");
 				div.onmouseover = () => {
-					div.getElementsByClassName("delete")[0].hidden = false;
+					this.getElementsByClassName("delete")[0].hidden = false;
 				}
 				div.onmouseout = () => {
-					div.getElementsByClassName("delete")[0].hidden = true;
+					this.getElementsByClassName("delete")[0].hidden = true;
 				}
 
 				span = document.createElement("span");
@@ -55,11 +55,11 @@ socket.onmessage = function (event) {
 };
 
 function deluser(email) {
-	socket.send("{'type': 1, 'data': '" + email + "'}");
+	socket.send('{"type": 1, "data": "' + email + '"}');
 }
 
 function adduser() {
-	socket.send("{'type': 0, 'data': '" + document.getElementById("email").value + "'}");
-	console.log("{'type': 0, 'data': '" + document.getElementById("email").value + "'}");
+	socket.send('{"type": 0, "data": "' + document.getElementById("email").value + '"}');
+	console.log('{"type": 0, "data": "' + document.getElementById("email").value + '"}');
 	return false;
 }
