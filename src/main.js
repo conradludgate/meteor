@@ -17,9 +17,9 @@ document.addEventListener("wheel", onZoom, false);
 function onZoom(event) {
 	zoom *= Math.pow(2, -event.deltaY / 10)
 	if (zoom < 1) zoom = 1;
-	if (zoom > 512) zoom = 16;
+	if (zoom > 16) zoom = 16;
 
-	let mouse = app.renderer.plugins.interaction.mouse.global;
+	let mouse = rMouse();
 	container.scale.set(zoom);
 	container.x = - (zoom-1) * mouse.x;
 	container.y = - (zoom-1) * mouse.y;
@@ -54,6 +54,7 @@ function onZoom(event) {
 
 // 15 FPS. It's not a game, just an image viewer
 PIXI.settings.TARGET_FPMS = 15 / 1000;
+PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 // Texture for a red circle
 red = (new PIXI.Graphics())
@@ -111,8 +112,8 @@ document.getElementById("img").appendChild(app.view);
 container = new PIXI.Container();
 container.interactive = true;
 container
-	.on('mousedown', onDown)
-	.on('mousemove', onMove);
+	.on('mousedown', onDown);
+	//.on('mousemove', onMove);
 
 //Add the image to the stage
 app.stage.addChild(container);
@@ -120,6 +121,7 @@ app.stage.addChild(container);
 let imagename = undefined;
 
 function loadImage(img) {
+	id = 0;
 	container.removeChildren();
 
 	imagename = img;
@@ -183,8 +185,15 @@ function onMove() {
 	this.y = - (zoom-1) * mouse.y;
 }
 
-function onDown() {
+function rMouse() {
 	let mouse = app.renderer.plugins.interaction.mouse.global;
+	mouse.x/zoom - container.x;
+	mouse.y/zoom - container.y;
+	return mouse;
+}
+
+function onDown() {
+	let mouse = rMouse()
 
 	// Get currently active selection container
 	let active = this.getChildByName("active");
@@ -201,8 +210,8 @@ function onDown() {
 	circle.realx = mouse.x;
 	circle.realy = mouse.y;
 	circle.scale.set(2/zoom);
-	circle.x = mouse.x - 9/zoom;
-	circle.y = mouse.y - 9/zoom;
+	circle.x = circle.realx - 9/zoom;
+	circle.y = circle.realy - 9/zoom;
 
 	circle.interactive = true;
 	circle
@@ -296,7 +305,7 @@ function save() {
 	active.destroy();
 }
 
-function submit() {
+function submitData() {
 	save();
 
 	let data = {"image": imagename, "meteors": Array(id)};

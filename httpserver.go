@@ -68,6 +68,7 @@ func main() {
 
 	http.HandleFunc("/", HTMLHandle)
 	http.HandleFunc("/login/", LoginHandle)
+	http.HandleFunc("/logout/", LogoutHandle)
 	http.HandleFunc("/submit/", SubmitHandle)
 	http.HandleFunc("/admin/", AdminHandle)
 	http.HandleFunc("/adminws/", AdminWSHandle)
