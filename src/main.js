@@ -15,14 +15,22 @@ let cross = undefined;
 document.addEventListener("wheel", onZoom, false);
 
 function onZoom(event) {
+	let mouse = app.renderer.plugins.interaction.mouse.global;
+	if (mouse.x < 0 || mouse.x > width ||
+		mouse.y < 0 || mouse.y > height) return;
+
 	zoom *= Math.pow(2, -event.deltaY / 10)
 	if (zoom < 1) zoom = 1;
 	if (zoom > 16) zoom = 16;
 
-	let mouse = rMouse();
+	//let mouse = rMouse();
 	container.scale.set(zoom);
 	container.x = - (zoom-1) * mouse.x;
 	container.y = - (zoom-1) * mouse.y;
+
+	// vp.width = width / zoom
+	// vp.height = height / zoom
+	// vp.x = max(min(mouse.x-vp.width/2, height), 0)
 
 	let active = container.getChildByName("active");
 	if (!active) return;
@@ -85,7 +93,7 @@ a = 'client';
 e = document.documentElement || document.body;
 }
 let maxwidth = e[ a+'Width' ] - 50;
-let maxheight = e[ a+'Height' ] - 50;
+let maxheight = e[ a+'Height' ] - 100;
 
 // Scale to the width
 ratio  *= maxwidth / width;
@@ -112,8 +120,8 @@ document.getElementById("img").appendChild(app.view);
 container = new PIXI.Container();
 container.interactive = true;
 container
-	.on('mousedown', onDown);
-	//.on('mousemove', onMove);
+	.on('mousedown', onDown)
+	.on('mousemove', onMove);
 
 //Add the image to the stage
 app.stage.addChild(container);
@@ -193,7 +201,7 @@ function rMouse() {
 }
 
 function onDown() {
-	let mouse = rMouse()
+	let mouse = app.renderer.plugins.interaction.mouse.global;
 
 	// Get currently active selection container
 	let active = this.getChildByName("active");
@@ -325,7 +333,7 @@ function submitData() {
 			d = JSON.parse(XHR.responseText);
 			if (d.error == 0) {
 				loadImage(d.msg);
-			} else if (d.error == 3) {
+			} else if (d.error == 1) {
 				window.localStorage.setItem("submit", JSON.stringify(data));
 				window.location.replace("/login");
 			} else {

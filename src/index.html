@@ -33,7 +33,7 @@
 					d = JSON.parse(XHR.responseText);
 					if (d.error == 0) {
 						loadImage(d.msg);
-					} else if (d.error == 3) {
+					} else if (d.error == 1) {
 						window.localStorage.setItem("submit", submit);
 						window.location.replace("/login");
 					} else {

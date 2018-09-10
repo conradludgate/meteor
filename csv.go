@@ -78,8 +78,10 @@ func openCSV(filename string) (err error) {
 
 	for _, rec := range records {
 		if len(rec) > 0 {
-			images[rec[0]] = false
-			processed++
+			if images[rec[0]] {
+				images[rec[0]] = false
+				processed++
+			}
 		}
 	}
 
