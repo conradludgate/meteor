@@ -24,7 +24,7 @@ func openSqlDB(filename string) (err error) {
 		return
 	}
 
-	rows, err := db.Query(`
+	_, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS accounts (
 	id 		PRIMARY_KEY INTEGER,
 	email 	STRING UNIQUE,
@@ -35,9 +35,13 @@ CREATE TABLE IF NOT EXISTS admin (
 	id 		PRIMARY_KEY INTEGER,
 	email	STRING UNIQUE
 );
-
-SELECT email FROM admin;
 `)
+
+	if err != nil {
+		return
+	}
+
+	rows, err := db.Query(`SELECT email FROM admin;`)
 
 	if err != nil {
 		return
