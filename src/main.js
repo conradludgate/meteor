@@ -342,6 +342,5 @@ function submitData() {
 		}
 	};
 	XHR.open("PUSH", "/submit/", true);
-	console.log(data);
 	XHR.send(JSON.stringify(data));
 }

@@ -103,7 +103,7 @@ func HTMLHandle(w http.ResponseWriter, r *http.Request) {
 func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 	c, email := CheckSession(w, r)
 	if !c {
-		w.WriteHeader(http.StatusUnauthorized)
+		// w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{
 			"error": 1,
 			"msg": "Login required"
@@ -115,7 +115,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		// w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{
 			"error": 2,
 			"msg": "Could not process request: ` + err.Error() + `"
@@ -125,7 +125,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &vals)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		// w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{
 			"error": 2,
 			"msg": "Could not process request: ` + err.Error() + `"
@@ -134,7 +134,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if vals.Image == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		// w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{
 			"error": 2,
 			"msg": "Could not process request: No image provided"
@@ -144,7 +144,7 @@ func SubmitHandle(w http.ResponseWriter, r *http.Request) {
 
 	err = submit(vals, email)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		// w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{
 			"error": 3,
 			"msg": "Could not save data: ` + err.Error() + `"
