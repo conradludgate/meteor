@@ -452,3 +452,8 @@ function skipData() {
         XHR.open("PUSH", "/submit/", true);
         XHR.send(JSON.stringify(data));
 }
+
+window.addEventListener("keypress", e => {
+    if (e.charCode === 115) submitData();
+    if (e.charCode === 32)  save();
+});
