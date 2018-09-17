@@ -12,6 +12,8 @@ let red = undefined;
 let green = undefined;
 let cross = undefined;
 
+let zoomdelta = 10;
+
 document.addEventListener("wheel", onZoom, false);
 
 function onZoom(event) {
@@ -19,14 +21,19 @@ function onZoom(event) {
 	if (mouse.x < 0 || mouse.x > width ||
 		mouse.y < 0 || mouse.y > height) return;
 
-	zoom *= Math.pow(2, -event.deltaY / 10)
+	let d = Math.pow(2, -event.deltaY / (zoomdelta * (event.altKey ? 10 : 1)));
+	zoom *= d;
+
 	if (zoom < 1) zoom = 1;
 	if (zoom > 16) zoom = 16;
 
 	//let mouse = rMouse();
 	container.scale.set(zoom);
-	container.x = - (zoom-1) * mouse.x;
-	container.y = - (zoom-1) * mouse.y;
+	// d = 2
+	// container.x = -width -> -width * 2
+	// container.y = 0 -> 0
+	container.x *= d;
+	container.y *= d;
 
 	// vp.width = width / zoom
 	// vp.height = height / zoom
@@ -59,6 +66,49 @@ function onZoom(event) {
 		}
 	});
 }
+
+function keyboard(keyCode) {
+  let key = {};
+  key.code = keyCode;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+  //The `downHandler`
+  key.downHandler = event => {
+    if (event.keyCode === key.code) {
+      if (key.isUp && key.press) key.press();
+      key.isDown = true;
+      key.isUp = false;
+    }
+    event.preventDefault();
+  };
+
+  //The `upHandler`
+  key.upHandler = event => {
+    if (event.keyCode === key.code) {
+      if (key.isDown && key.release) key.release();
+      key.isDown = false;
+      key.isUp = true;
+    }
+    event.preventDefault();
+  };
+
+  //Attach event listeners
+  window.addEventListener(
+    "keydown", key.downHandler.bind(key), false
+  );
+  window.addEventListener(
+    "keyup", key.upHandler.bind(key), false
+  );
+  return key;
+}
+
+let left = keyboard(37),
+	up = keyboard(38),
+	right = keyboard(39),
+	down = keyboard(40),
+	alt = keyboard(18);
 
 // 15 FPS. It's not a game, just an image viewer
 PIXI.settings.TARGET_FPMS = 15 / 1000;
@@ -120,11 +170,39 @@ document.getElementById("img").appendChild(app.view);
 container = new PIXI.Container();
 container.interactive = true;
 container
-	.on('mousedown', onDown)
-	.on('mousemove', onMove);
+	.on('mousedown', onDown);
+	// .on('mousemove', onMove);
 
 //Add the image to the stage
 app.stage.addChild(container);
+
+let screenshift = 10;
+
+app.ticker.add(delta => {
+	let shift = screenshift;
+
+	if (alt.isDown) {
+		shift *= 10
+	}
+
+	if (left.isDown) {
+		container.x += shift * zoom;
+	} else if (right.isDown) {
+		container.x -= shift * zoom;
+	}
+
+        if (up.isDown) {
+                container.y += shift * zoom;
+        } else if (down.isDown) {
+                container.y -= shift * zoom;
+        }
+
+	container.x = Math.max(container.x, -(zoom-1)*width);
+	container.x = Math.min(container.x, 0);
+
+	container.y = Math.max(container.y, -(zoom-1)*height);
+        container.y = Math.min(container.y, 0);
+});
 
 let imagename = undefined;
 
@@ -194,14 +272,23 @@ function onMove() {
 }
 
 function rMouse() {
+	// zoom = 2
+	// mouse = {width/2, 0}
+	// container = {-width, 0}
+	// result = {3width/2, 0}
+
 	let mouse = app.renderer.plugins.interaction.mouse.global;
-	mouse.x/zoom - container.x;
-	mouse.y/zoom - container.y;
+	mouse.x -= container.x;
+	mouse.y -= container.y;
+	mouse.x /= zoom;
+	mouse.y /= zoom;
+
 	return mouse;
 }
 
 function onDown() {
-	let mouse = app.renderer.plugins.interaction.mouse.global;
+	//let mouse = app.renderer.plugins.interaction.mouse.global;
+	let mouse = rMouse();
 
 	// Get currently active selection container
 	let active = this.getChildByName("active");
@@ -343,4 +430,25 @@ function submitData() {
 	};
 	XHR.open("PUSH", "/submit/", true);
 	XHR.send(JSON.stringify(data));
+}
+
+function skipData() {
+	let data = {"image": imagename};
+
+        let XHR = new XMLHttpRequest();
+        XHR.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                        d = JSON.parse(XHR.responseText);
+                        if (d.error == 0) {
+                                loadImage(d.msg);
+                        } else if (d.error == 1) {
+                                window.localStorage.setItem("submit", JSON.stringify(data));
+                                window.location.replace("/login");
+                        } else {
+                                console.log(d);
+                        }
+                }
+        };
+        XHR.open("PUSH", "/submit/", true);
+        XHR.send(JSON.stringify(data));
 }
