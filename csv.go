@@ -159,5 +159,7 @@ func submit(d submitData, email string) error {
 		}})
 	}
 
-	return nil
+	csvw.Flush()
+
+	return csvw.Error()
 }
