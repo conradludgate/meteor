@@ -59,7 +59,12 @@ func RegisterConn(conn *websocket.Conn) error {
 		}
 	}
 
-	err := conn.WriteJSON(WSMessage{LOG, history})
+	trunc := len(history) - 200
+	if trunc < 0 {
+		trunc = 0	
+	}
+	
+	err := conn.WriteJSON(WSMessage{LOG, history[trunc:]})
 	if err != nil {
 		return err
 	}
